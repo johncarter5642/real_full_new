@@ -33,4 +33,9 @@ export interface DashboardMetrics {
   leadsByLocation: Record<string, number>;
   recentLeads: IncomingLead[];
   upcomingAppointments: AppointmentDetail[];
+  rawData: {
+    qualifiedLeads: QualifiedLead[];
+    incomingLeads: IncomingLead[];
+    appointments: AppointmentDetail[];
+  };
 }

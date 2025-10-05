@@ -43,7 +43,12 @@ async function fetchDashboardData(): Promise<DashboardMetrics> {
     recentLeads: incoming.slice(-5).reverse(),
     upcomingAppointments: appointments.sort((a, b) => 
       new Date(a.appointment_start_time).getTime() - new Date(b.appointment_start_time).getTime()
-    )
+    ),
+    rawData: {
+      qualifiedLeads: qualified,
+      incomingLeads: incoming,
+      appointments
+    }
   };
 }
 

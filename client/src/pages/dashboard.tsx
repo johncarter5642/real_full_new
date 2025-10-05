@@ -1,21 +1,57 @@
 import { useState } from "react";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useTheme } from "@/hooks/useTheme";
 import { MetricCard } from "@/components/MetricCard";
 import { LeadDistributionChart } from "@/components/LeadDistributionChart";
 import { LocationChart } from "@/components/LocationChart";
 import { RecentLeadsTable } from "@/components/RecentLeadsTable";
 import { AppointmentsTable } from "@/components/AppointmentsTable";
 import { queryClient } from "@/lib/queryClient";
+import { exportQualifiedLeadsToCSV, exportIncomingLeadsToCSV, exportAppointmentsToCSV, exportAllDataToCSV } from "@/lib/exportUtils";
+
+interface PreviousMetrics {
+  totalLeads: number;
+  hot: number;
+  warm: number;
+  cold: number;
+  appointmentsCount: number;
+}
 
 export default function Dashboard() {
   const { data, isLoading, error, refetch } = useDashboardData();
+  const { theme, toggleTheme } = useTheme();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [previousMetrics, setPreviousMetrics] = useState<PreviousMetrics | null>(null);
 
   const handleRefresh = async () => {
+    if (data) {
+      setPreviousMetrics({
+        totalLeads: data.totalLeads,
+        hot: data.hot,
+        warm: data.warm,
+        cold: data.cold,
+        appointmentsCount: data.appointmentsCount
+      });
+    }
     setIsRefreshing(true);
     await queryClient.invalidateQueries({ queryKey: ["/dashboard-data"] });
     await refetch();
     setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const getTrendIndicator = (current: number, previous: number | undefined) => {
+    if (previous == null || previous === current) return null;
+    
+    const change = current - previous;
+    const percentChange = previous !== 0 ? Math.abs((change / previous) * 100).toFixed(0) : "100";
+    const isPositive = change > 0;
+    
+    return (
+      <span className={`ml-2 text-xs ${isPositive ? 'text-accent' : 'text-destructive'}`}>
+        <i className={`fas ${isPositive ? 'fa-arrow-up' : 'fa-arrow-down'}`}></i>
+        {percentChange}%
+      </span>
+    );
   };
 
   const updateLastUpdatedTime = () => {
@@ -78,6 +114,67 @@ export default function Dashboard() {
                 </div>
               </div>
               
+              {/* Export Dropdown */}
+              {data && (
+                <div className="relative group">
+                  <button 
+                    className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
+                    data-testid="export-button"
+                  >
+                    <i className="fas fa-download"></i>
+                    <span className="hidden sm:inline">Export</span>
+                    <i className="fas fa-chevron-down text-xs"></i>
+                  </button>
+                  <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                    <div className="py-1">
+                      <button
+                        onClick={() => exportAllDataToCSV(data.rawData.qualifiedLeads, data.rawData.incomingLeads, data.rawData.appointments)}
+                        className="w-full text-left px-4 py-2 hover:bg-secondary text-foreground text-sm flex items-center gap-2"
+                        data-testid="export-all"
+                      >
+                        <i className="fas fa-file-csv"></i>
+                        Export All Data
+                      </button>
+                      <button
+                        onClick={() => exportQualifiedLeadsToCSV(data.rawData.qualifiedLeads)}
+                        className="w-full text-left px-4 py-2 hover:bg-secondary text-foreground text-sm flex items-center gap-2"
+                        data-testid="export-qualified-leads"
+                      >
+                        <i className="fas fa-user-check"></i>
+                        Export Qualified Leads
+                      </button>
+                      <button
+                        onClick={() => exportIncomingLeadsToCSV(data.rawData.incomingLeads)}
+                        className="w-full text-left px-4 py-2 hover:bg-secondary text-foreground text-sm flex items-center gap-2"
+                        data-testid="export-incoming-leads"
+                      >
+                        <i className="fas fa-inbox"></i>
+                        Export Incoming Leads
+                      </button>
+                      <button
+                        onClick={() => exportAppointmentsToCSV(data.rawData.appointments)}
+                        className="w-full text-left px-4 py-2 hover:bg-secondary text-foreground text-sm flex items-center gap-2"
+                        data-testid="export-appointments"
+                      >
+                        <i className="fas fa-calendar"></i>
+                        Export Appointments
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Dark Mode Toggle */}
+              <button 
+                onClick={toggleTheme}
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
+                data-testid="theme-toggle"
+                aria-label="Toggle dark mode"
+              >
+                <i className={`fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i>
+                <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
+              </button>
+              
               {/* Manual Refresh Button */}
               <button 
                 onClick={handleRefresh}
@@ -116,6 +213,7 @@ export default function Dashboard() {
                   description="Qualified leads in pipeline"
                   icon={<i className="fas fa-users"></i>}
                   data-testid="metric-total-leads"
+                  trendIndicator={getTrendIndicator(data.totalLeads, previousMetrics?.totalLeads)}
                 />
                 
                 <MetricCard
@@ -126,6 +224,7 @@ export default function Dashboard() {
                   iconBgColor="bg-destructive/10"
                   iconColor="text-destructive"
                   data-testid="metric-hot-leads"
+                  trendIndicator={getTrendIndicator(data.hot, previousMetrics?.hot)}
                 />
                 
                 <MetricCard
@@ -136,6 +235,7 @@ export default function Dashboard() {
                   iconBgColor="bg-warning/10"
                   iconColor="text-warning"
                   data-testid="metric-warm-leads"
+                  trendIndicator={getTrendIndicator(data.warm, previousMetrics?.warm)}
                 />
                 
                 <MetricCard
@@ -144,6 +244,7 @@ export default function Dashboard() {
                   description="Low engagement leads"
                   icon={<i className="fas fa-snowflake"></i>}
                   data-testid="metric-cold-leads"
+                  trendIndicator={getTrendIndicator(data.cold, previousMetrics?.cold)}
                 />
                 
                 <MetricCard
@@ -164,6 +265,7 @@ export default function Dashboard() {
                   iconBgColor="bg-accent/10"
                   iconColor="text-accent"
                   data-testid="metric-appointments"
+                  trendIndicator={getTrendIndicator(data.appointmentsCount, previousMetrics?.appointmentsCount)}
                 />
                 
                 <div className="lg:col-span-2">
