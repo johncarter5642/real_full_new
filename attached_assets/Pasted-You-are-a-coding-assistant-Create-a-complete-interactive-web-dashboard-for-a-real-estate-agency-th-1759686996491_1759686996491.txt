@@ -1,0 +1,223 @@
+You are a coding assistant. 
+Create a complete interactive web dashboard for a real estate agency that visualizes lead and appointment data fetched from the following n8n webhook URL:
+
+👉 Endpoint:
+https://jadu123456.app.n8n.cloud/webhook/d1311a58-2f18-4d00-af0d-bde782e52c28
+
+---
+
+## 1️⃣ Functional Requirements
+
+- The app should fetch JSON data using `fetch()` or Axios when the page loads.
+- Data will contain three arrays:
+  - `qualifiedLeads`
+  - `incomingLeads`
+  - `appointmentdetails`
+
+Sample data structure:
+```json
+{
+  "qualifiedLeads": [
+    {"name": "alex", "score": 10, "status": "Hot", "location": "bengaluru"},
+    {"name": "russ", "score": 7, "status": "Warm", "location": "mysore"},
+    {"name": "jadu", "score": 10, "status": "Hot", "location": "mysore"}
+  ],
+  "incomingLeads": [
+    {"Name": "alex", "location": "bengaluru", "submittedAt": "2025-10-04T17:38:55Z"},
+    {"Name": "russ", "location": "mysore", "submittedAt": "2025-10-05T08:43:19Z"}
+  ],
+  "appointmentdetails": [
+    {"Name": "jadu", "appointment_start_time": "2025-10-06T09:00:00+05:30"},
+    {"Name": "REAL ESTATE (Jummu rummu)", "appointment_start_time": "2025-10-06T09:00:00+05:30"}
+  ]
+}
+2️⃣ Dashboard Calculations & Logic
+From this data, calculate and display the following KPIs:
+
+🔹 Lead Metrics
+Total Leads: qualifiedLeads.length
+
+Hot Leads: Count where status === "Hot"
+
+Warm Leads: Count where status === "Warm"
+
+Cold Leads: Count where status === "Cold"
+
+Average Lead Score: Average of all score values in qualifiedLeads
+
+🔹 Conversion Metrics
+Appointments Booked: appointmentdetails.length
+
+Conversion Rate (%): (appointmentsBooked / qualifiedLeads.length) * 100
+
+🔹 Location Insights
+Leads by Location: Count how many qualified leads per location
+
+Display as a bar or pie chart (e.g., using Chart.js)
+
+🔹 Recent Leads Table
+List latest 5 leads from incomingLeads with:
+
+Name
+
+Location
+
+Plan (timeline)
+
+SubmittedAt (formatted nicely)
+
+Use table or card UI.
+
+🔹 Upcoming Appointments
+List upcoming appointments (sorted by start time)
+
+Name
+
+Date & Time (formatted)
+
+Duration (end - start)
+
+3️⃣ Tech Stack & UI
+Use React.js (Vite or Create React App).
+
+Use Chart.js or Recharts for graphs.
+
+Use Bootstrap or TailwindCSS for styling (whichever easier).
+
+The UI should have a clean layout with:
+
+Header: “🏡 Real Estate Dashboard”
+
+Metric cards showing totals.
+
+Two charts:
+
+Hot/Warm/Cold distribution
+
+Leads per Location
+
+Tables:
+
+Recent Incoming Leads
+
+Upcoming Appointments
+
+Auto-refresh data every 60 seconds.
+
+4️⃣ Data Fetching Logic (Include this in the code)
+Use:
+
+js
+Copy code
+async function fetchDashboardData() {
+  const response = await fetch("https://jadu123456.app.n8n.cloud/webhook/d1311a58-2f18-4d00-af0d-bde782e52c28");
+  const data = await response.json();
+
+  // Process and return structured metrics
+  const qualified = data.qualifiedLeads || [];
+  const incoming = data.incomingLeads || [];
+  const appointments = data.appointmentdetails || [];
+
+  const totalLeads = qualified.length;
+  const hot = qualified.filter(l => l.status === "Hot").length;
+  const warm = qualified.filter(l => l.status === "Warm").length;
+  const cold = qualified.filter(l => l.status === "Cold").length;
+  const avgScore = totalLeads ? (qualified.reduce((a,b)=>a+b.score,0) / totalLeads).toFixed(1) : 0;
+  const appointmentsCount = appointments.length;
+  const conversionRate = totalLeads ? ((appointmentsCount / totalLeads) * 100).toFixed(1) : 0;
+
+  // Leads by Location
+  const leadsByLocation = {};
+  qualified.forEach(l => {
+    const loc = l.location || "Unknown";
+    leadsByLocation[loc] = (leadsByLocation[loc] || 0) + 1;
+  });
+
+  return {
+    totalLeads,
+    hot,
+    warm,
+    cold,
+    avgScore,
+    appointmentsCount,
+    conversionRate,
+    leadsByLocation,
+    recentLeads: incoming.slice(-5).reverse(),
+    upcomingAppointments: appointments.sort((a,b)=> new Date(a.appointment_start_time) - new Date(b.appointment_start_time))
+  };
+}
+5️⃣ Display Layout (UI Outline)
+Dashboard Header:
+🏡 Real Estate Dashboard
+
+Top KPIs (cards):
+Total Leads
+
+Hot Leads
+
+Warm Leads
+
+Cold Leads
+
+Average Score
+
+Conversion Rate (%)
+
+Appointments Booked
+
+Charts:
+Pie Chart → Hot/Warm/Cold Distribution
+
+Bar Chart → Leads per Location
+
+Tables:
+Recent Incoming Leads
+| Name | Location | Plan | Submitted At |
+
+Upcoming Appointments
+| Name | Appointment Time | Duration |
+
+6️⃣ Auto-Refresh Logic
+Use:
+
+js
+Copy code
+useEffect(() => {
+  fetchDashboardData().then(setDashboard);
+  const interval = setInterval(() => fetchDashboardData().then(setDashboard), 60000);
+  return () => clearInterval(interval);
+}, []);
+7️⃣ Optional Enhancements
+Add a “Last Updated” timestamp.
+
+Show trend arrows (🔺/🔻) comparing with previous fetch.
+
+Dark mode toggle.
+
+Responsive layout for mobile.
+
+Build and deploy this on Replit using React + Chart.js.
+Make sure every metric is correctly calculated from the JSON structure given above.
+Code should be production-ready, clean, and commented.
+
+yaml
+Copy code
+
+---
+
+### 💡 Result
+
+Once you paste that into **Replit’s AI code generator**, it will:
+- Fetch your **live n8n webhook data**
+- Calculate: totals, hot/warm/cold ratio, conversion rate, etc.
+- Render them into charts, cards, and tables
+- Auto-refresh every 60 seconds  
+
+---
+
+👉 Would you like me to generate the **exact React source code** (App.js + components) ready to paste into Replit now?  
+That way you can instantly run it and see the live dashboard.
+
+
+
+
