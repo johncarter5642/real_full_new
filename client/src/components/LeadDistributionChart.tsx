@@ -57,11 +57,8 @@ export function LeadDistributionChart({ data }: LeadDistributionChartProps) {
               label: function(context) {
                 const label = context.label || "";
                 const value = context.parsed || 0;
-                const total = context.dataset.data.reduce((a, b) => {
-                  const aVal = typeof a === 'number' ? a : 0;
-                  const bVal = typeof b === 'number' ? b : 0;
-                  return aVal + bVal;
-                }, 0) as number;
+                const dataArray = context.dataset.data.filter((d): d is number => typeof d === 'number');
+                const total = dataArray.reduce((a, b) => a + b, 0);
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
                 return `${label}: ${value} (${percentage}%)`;
               }
