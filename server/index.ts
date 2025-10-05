@@ -66,8 +66,8 @@ app.use((req, res, next) => {
     await setupVite(app, server);
   } else {
     // Use absolute path for static files in production
-    const distPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist", "public");
-    app.use(express.static(distPath));
+    // const distPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist", "public");
+    // app.use(express.static(distPath));
     serveStatic(app);
   }
 
