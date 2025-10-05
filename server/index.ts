@@ -1,4 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -63,6 +65,9 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
+    // Use absolute path for static files in production
+    const distPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist", "public");
+    app.use(express.static(distPath));
     serveStatic(app);
   }
 
